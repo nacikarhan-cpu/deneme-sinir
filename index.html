@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sinir Sistemi Deneme Sınavı - Naci Karhan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f0f4f8;
+            color: #1a202c;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .option-btn {
+            transition: all 0.2s ease;
+            border: 2px solid #e2e8f0;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: #4299e1;
+            background-color: #ebf8ff;
+            transform: translateX(5px);
+        }
+
+        .correct {
+            background-color: #48bb78 !important;
+            color: white !important;
+            border-color: #2f855a !important;
+        }
+
+        .wrong {
+            background-color: #f56565 !important;
+            color: white !important;
+            border-color: #c53030 !important;
+        }
+
+        .footer-signature {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #718096;
+            margin-top: auto;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .badge-pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app" class="container mx-auto px-4 py-8 max-w-2xl flex-grow">
+        <!-- Giriş Ekranı -->
+        <div id="entry-screen" class="glass-card p-8 text-center">
+            <h1 class="text-3xl font-bold text-blue-700 mb-4">🧠 Sinir Sistemi Deneme Sınavı</h1>
+            <p class="text-gray-600 mb-6 italic">"Bilgini ölç, eksiklerini tamamla ve başarıya ulaş!"</p>
+            
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-8 text-left">
+                <p class="text-sm text-blue-800">
+                    <strong>📌 Sınav Bilgileri:</strong>
+                    <ul class="list-disc ml-5 mt-2 space-y-1">
+                        <li>Ders: 11. Sınıf Biyoloji</li>
+                        <li>Konu: İnsanda Sinir Sistemi</li>
+                        <li>Soru Sayısı: 25</li>
+                        <li>Seçenek Sayısı: 5 (A-E)</li>
+                        <li>Kazanım: 2024 MEB Güncel Müfredat</li>
+                    </ul>
+                </p>
+            </div>
+
+            <button onclick="startExam()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transition transform hover:-translate-y-1">
+                SINAVI BAŞLAT
+            </button>
+        </div>
+
+        <!-- Sınav Alanı -->
+        <div id="exam-screen" class="hidden">
+            <div class="flex justify-between items-center mb-6">
+                <button onclick="quitExam()" class="text-red-500 hover:text-red-700 font-semibold flex items-center">
+                    <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    Sınavı Bırak
+                </button>
+                <span id="progress-text" class="bg-gray-200 px-4 py-1 rounded-full text-sm font-bold text-gray-700">Soru: 1 / 25</span>
+            </div>
+
+            <div class="glass-card p-8 mb-6">
+                <p id="question-text" class="text-lg font-semibold leading-relaxed mb-8"></p>
+                <div id="options-container" class="space-y-3">
+                    <!-- Seçenekler buraya JS ile eklenecek -->
+                </div>
+            </div>
+
+            <div id="feedback-area" class="hidden glass-card p-4 text-center mb-4 transition-all duration-300">
+                <p id="feedback-message" class="font-bold text-lg"></p>
+                <p id="explanation-text" class="text-sm mt-2 text-gray-700"></p>
+            </div>
+
+            <button id="next-btn" onclick="nextQuestion()" class="hidden w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl shadow-md transition">
+                SONRAKİ SORU
+            </button>
+        </div>
+
+        <!-- Sonuç Ekranı -->
+        <div id="result-screen" class="hidden glass-card p-8 text-center">
+            <div id="badge-container" class="mb-6 text-6xl"></div>
+            <h2 class="text-3xl font-bold mb-4">Sınav Karnesi</h2>
+            
+            <div class="grid grid-cols-2 gap-4 mb-8">
+                <div class="bg-blue-50 p-4 rounded-xl">
+                    <p class="text-gray-500 text-sm">Toplam Soru</p>
+                    <p id="res-total" class="text-2xl font-bold">25</p>
+                </div>
+                <div class="bg-green-50 p-4 rounded-xl">
+                    <p class="text-gray-500 text-sm">Doğru</p>
+                    <p id="res-correct" class="text-2xl font-bold text-green-600">0</p>
+                </div>
+                <div class="bg-red-50 p-4 rounded-xl">
+                    <p class="text-gray-500 text-sm">Yanlış</p>
+                    <p id="res-wrong" class="text-2xl font-bold text-red-600">0</p>
+                </div>
+                <div class="bg-purple-50 p-4 rounded-xl">
+                    <p class="text-gray-500 text-sm">Başarı Oranı</p>
+                    <p id="res-percent" class="text-2xl font-bold text-purple-600">%0</p>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <button onclick="location.reload()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition">
+                    Tekrar Dene
+                </button>
+                <button onclick="alert('Yeni konular yakında eklenecektir!')" class="w-full border-2 border-gray-300 hover:border-gray-400 font-bold py-3 rounded-xl transition">
+                    Farklı Bir Konuya Geç
+                </button>
+            </div>
+            
+            <p class="mt-8 text-xs text-gray-400 italic">Ekran görüntüsü alıp başarı rozetini paylaşmayı unutma!</p>
+        </div>
+    </div>
+
+    <footer class="footer-signature">
+        Tasarım: Naci Karhan
+    </footer>
+
+    <script>
+        const questions = [
+            {
+                q: "Nöronlarda impuls iletimi sırasında gerçekleşen elektrokimyasal değişimler ile ilgili hangisi yanlıştır?",
+                options: ["Polarizasyonda hücre dışı (+), hücre içi (-) yüklüdür.", "Depolarizasyonda sodyum kanalları açılır.", "Repolarizasyonda ATP harcanmaz.", "İmpuls iletimi aksonda dendritten akson ucuna doğrudur.", "Aksonda miyelin kılıf olması iletim hızını artırır."],
+                correct: 2,
+                explanation: "Repolarizasyon sırasında sodyum-potasyum pompası aktifleşerek iyon dengesini sağladığı için ATP harcanır."
+            },
+            {
+                q: "Merkezi sinir sisteminde beyin ve omuriliği saran 'Meninges' tabakalarından dıştan içe doğru sıralanışı nasıldır?",
+                options: ["Sert zar - İnce zar - Örümceksi zar", "İnce zar - Örümceksi zar - Sert zar", "Sert zar - Örümceksi zar - İnce zar", "Örümceksi zar - Sert zar - İnce zar", "İnce zar - Sert zar - Örümceksi zar"],
+                correct: 2,
+                explanation: "Sıralama: En dışta kafatasına yapışık Sert Zar, ortada Örümceksi Zar, en içte beynin kıvrımlarına giren İnce Zar şeklindedir."
+            },
+            {
+                q: "Susama, vücut ısısı ve iştahın kontrol merkezi aşağıdakilerden hangisidir?",
+                options: ["Talamus", "Hipotalamus", "Beyincik", "Pons", "Omurilik Soğanı"],
+                correct: 1,
+                explanation: "Hipotalamus, homeostasi merkezidir; açlık, susuzluk, uyku, vücut sıcaklığı ve hormonal dengeyi kontrol eder."
+            },
+            {
+                q: "Refleks yayında bir impulsun izlediği yol aşağıdakilerden hangisinde doğru verilmiştir?",
+                options: ["Reseptör - Duyu Nöronu - Ara Nöron - Motor Nöron - Efektör", "Reseptör - Motor Nöron - Ara Nöron - Duyu Nöronu - Efektör", "Efektör - Duyu Nöronu - Ara Nöron - Motor Nöron - Reseptör", "Ara Nöron - Duyu Nöronu - Reseptör - Motor Nöron", "Duyu Nöronu - Reseptör - Ara Nöron - Efektör"],
+                correct: 0,
+                explanation: "Klasik bir refleks yayı: Reseptör (algı) -> Duyu (iletim) -> Ara (merkez/değerlendirme) -> Motor (emir) -> Efektör (cevap) sırasını izler."
+            },
+            {
+                q: "Kas tonusu ve vücut dengesinin sağlanmasında aşağıdakilerden hangisi doğrudan görevlidir?",
+                options: ["Beyin Kabuğu", "Omurilik", "Beyincik", "Hipofiz", "Talamus"],
+                correct: 2,
+                explanation: "Beyincik (Hayat Ağacı), hareket koordinasyonu, denge ve kas tonusundan sorumludur."
+            },
+            {
+                q: "Nöronlar arasında bağlantı kuran boşluklara ne ad verilir?",
+                options: ["Ranvier Boğumu", "Sinaps", "Akson Tepeciği", "Miyelin Kılıf", "Dendrit"],
+                correct: 1,
+                explanation: "Sinapslar, iki nöron veya bir nöron ile bir efektör arasındaki kimyasal iletim noktalarıdır."
+            },
+            {
+                q: "Aşağıdakilerden hangisi uç beynin (Serebrum) görevlerinden biri değildir?",
+                options: ["Öğrenme ve hafıza", "Zeka ve bilinçli hareket", "Duyu organlarından gelen bilgilerin değerlendirilmesi", "Hayatsal reflekslerin (yutkunma, öksürme) kontrolü", "İstemli kas hareketleri"],
+                correct: 3,
+                explanation: "Yutkunma, öksürme gibi hayatsal refleksler omurilik soğanı tarafından kontrol edilir."
+            },
+            {
+                q: "Otonom sinir sistemi ile ilgili aşağıdaki bilgilerden hangisi yanlıştır?",
+                options: ["İstem dışı çalışan organları kontrol eder.", "Sadece miyelinli nöronlardan oluşur.", "Sempatik ve parasempatik sinirlerden oluşur.", "Kalp hızı, sindirim gibi olayları düzenler.", "Beyin ve omurilikten gelen motor nöronlar içerir."],
+                correct: 1,
+                explanation: "Otonom sinir sistemindeki nöronlar genellikle miyelinsizdir, bu yüzden iletim somatik sinirlere göre daha yavaştır."
+            },
+            {
+                q: "Duyu organlarından gelen verilerin (koku hariç) toplandığı ve beyin kabuğuna gönderildiği merkez hangisidir?",
+                options: ["Hipotalamus", "Epitalamus", "Talamus", "Mezensefalon", "Pons"],
+                correct: 2,
+                explanation: "Talamus, koku duyusu hariç tüm duyuların sınıflandırıldığı ve uç beyne aktarıldığı istasyondur."
+            },
+            {
+                q: "Bir nöronda eşik değerin altındaki uyarıların impuls oluşturmaması, üzerindeki uyarıların ise aynı şiddette cevap oluşturmasına ne denir?",
+                options: ["Geri bildirim", "Ya hep ya hiç prensibi", "Sumasyon", "Sinaptik direnç", "Refleks"],
+                correct: 1,
+                explanation: "Tek bir sinir teli veya kas lifi için geçerli olan bu kurala 'Ya hep ya hiç' yasası denir."
+            },
+            {
+                q: "Nöronların beslenmesini sağlayan, onlara destek olan ve koruyan yardımcı hücrelere ne ad verilir?",
+                options: ["Efektörler", "Nöroglialar", "Glikozomlar", "Reseptörler", "Nörotransmitterler"],
+                correct: 1,
+                explanation: "Glia hücreleri (astrosit, oligodentrosit, Schwann vb.) nöronların sağlığı için kritik görevler üstlenir."
+            },
+            {
+                q: "Nörotransmitter maddelerin sinaptik boşluğa salgılanma yöntemi aşağıdakilerden hangisidir?",
+                options: ["Difüzyon", "Osmoz", "Egzositoz", "Endositoz", "Aktif Taşıma"],
+                correct: 2,
+                explanation: "Hücre içindeki keseciklerin (veziküllerin) hücre zarıyla birleşip içeriğini boşaltması egzositoz ile olur."
+            },
+            {
+                q: "Aşağıdakilerden hangisi parasempatik sinirlerin etkisiyle gerçekleşir?",
+                options: ["Göz bebeklerinin büyümesi", "Tükürük salgısının azalması", "Kalp atış hızının yavaşlaması", "Bronşların genişlemesi", "Sindirim hareketlerinin durması"],
+                correct: 2,
+                explanation: "Parasempatik sistem 'dinlen ve sindir' sistemidir; kalp atışını yavaşlatır, sindirimi hızlandırır."
+            },
+            {
+                q: "Omuriliğin yapısı ile ilgili hangisi doğrudur?",
+                options: ["Dışta boz madde, içte ak madde bulunur.", "Dışta ak madde, içte boz madde bulunur.", "Sadece duyu nöronlarından oluşur.", "Beyincik ile doğrudan bağlantılıdır.", "Kafa reflekslerini kontrol eder."],
+                correct: 1,
+                explanation: "Omurilik ve omurilik soğanında dışta AK madde (aksonlar), içte BOZ madde (hücre gövdeleri) bulunur; Beyinde ise tam tersidir."
+            },
+            {
+                q: "Ranvier boğumları ile ilgili hangisi doğrudur?",
+                options: ["Miyelin kılıfın kesintiye uğradığı yerlerdir.", "İmpuls iletimini yavaşlatır.", "Sadece dendritlerde bulunur.", "Nörotransmitter sentezler.", "Hücre çekirdeğini barındırır."],
+                correct: 0,
+                explanation: "Ranvier boğumlarında impuls 'atlamalı iletim' (saltatoric conduction) yapar ve bu iletim hızını artırır."
+            },
+            {
+                q: "Solunum, dolaşım ve boşaltım gibi hayatsal sistemlerin ana kontrol merkezi neresidir?",
+                options: ["Beyin Kabuğu", "Talamus", "Omurilik Soğanı", "Pons", "Beyincik"],
+                correct: 2,
+                explanation: "Omurilik soğanı (Hayat Düğümü), hayatsal faaliyetleri düzenler; zedelenmesi ölüme yol açar."
+            },
+            {
+                q: "Bir nöronda impulsun hızı uyarının şiddeti arttıkça nasıl değişir?",
+                options: ["Artar", "Azalır", "Değişmez", "Önce artar sonra azalır", "Eşik değerine kadar artar"],
+                correct: 2,
+                explanation: "İmpuls iletim hızı nöronun yapısına (miyelin, çap) bağlıdır. Uyarı şiddeti sadece impuls sayısını (frekansını) değiştirir, hızı değiştirmez."
+            },
+            {
+                q: "Schwann hücreleri hangi sistemde miyelin kılıf üretir?",
+                options: ["Merkezi Sinir Sistemi", "Çevresel Sinir Sistemi", "Sadece Beyin", "Sadece Omurilik", "Otonom Ganglionlar"],
+                correct: 1,
+                explanation: "Çevresel sinir sisteminde Schwann hücreleri, Merkezi sinir sisteminde ise Oligodendrositler miyelin kılıf oluşturur."
+            },
+            {
+                q: "Diz kapağı refleksi kaç nörondan oluşan bir yaya sahiptir?",
+                options: ["1", "2", "3", "4", "5"],
+                correct: 1,
+                explanation: "Diz kapağı refleksi en basit reflekslerden biridir; ara nöron içermez, sadece duyu ve motor nöron görev alır."
+            },
+            {
+                q: "Aşağıdakilerden hangisi bir nörotransmitter madde değildir?",
+                options: ["Asetilkolin", "Dopamin", "Serotonin", "Histamin", "Glikojen"],
+                correct: 4,
+                explanation: "Glikojen bir depolama polisakkaritidir. Diğerleri sinirsel iletimde görev alan kimyasal habercilerdir."
+            },
+            {
+                q: "Soma (Hücre Gövdesi) kısmında bulunan ve protein sentezinin yoğun olduğu granüllü ER bölgelerine ne denir?",
+                options: ["Nissl cisimcikleri", "Golgi aygıtı", "Lizozom", "Sentrozom", "Nörofibril"],
+                correct: 0,
+                explanation: "Nöronların hücre gövdesinde yoğun bulunan bu bölgelere Nissl cisimcikleri adı verilir."
+            },
+            {
+                q: "Orta beynin görevlerinden biri aşağıdakilerden hangisidir?",
+                options: ["Dengeyi kontrol etmek", "İşitme ve görme reflekslerini düzenlemek", "Düşünme ve hafıza", "Hormon kontrolü", "Uyku periyodunu ayarlamak"],
+                correct: 1,
+                explanation: "Orta beyin, ışıkta göz bebeğinin daralması veya sese karşı kulak kabartma gibi refleksleri yönetir."
+            },
+            {
+                q: "Akson çapının artması iletim hızını nasıl etkiler?",
+                options: ["Azaltır", "Etkilemez", "Artırır", "Sadece sinapslarda artırır", "Önce azaltır sonra sabitler"],
+                correct: 2,
+                explanation: "Akson çapı arttıkça elektriksel direnç azalır, dolayısıyla impuls iletim hızı artar."
+            },
+            {
+                q: "Beyin omurilik sıvısı (BOS) nerede bulunur?",
+                options: ["Sert zarın üstünde", "Sert zar ile örümceksi zar arasında", "Örümceksi zar ile ince zar arasında", "Hücre çekirdeğinde", "Sadece ventriküllerde"],
+                correct: 2,
+                explanation: "BOS, örümceksi zar ile ince zar arasındaki boşlukta dolaşarak beyni darbelere karşı korur ve iyon dengesi sağlar."
+            },
+            {
+                q: "Hangi olayda impuls iletimi sadece elektriksel değil, aynı zamanda kimyasaldır?",
+                options: ["Akson boyunca ilerleme", "Miyelin kılıf içinden geçme", "Sinaptik boşluktan geçme", "Ranvier boğumunda atlama", "Polarizasyon durumu"],
+                correct: 2,
+                explanation: "Akson boyunca iletim elektriksel ağırlıklıdır ancak sinapslarda (nörotransmitterler sayesinde) tamamen kimyasal gerçekleşir."
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = { correct: 0, wrong: 0 };
+        let canAnswer = true;
+
+        function startExam() {
+            document.getElementById('entry-screen').classList.add('hidden');
+            document.getElementById('exam-screen').classList.remove('hidden');
+            showQuestion();
+        }
+
+        function quitExam() {
+            if(confirm("Sınavı yarıda bırakmak istediğine emin misin?")) {
+                location.reload();
+            }
+        }
+
+        function showQuestion() {
+            const q = questions[currentQuestion];
+            document.getElementById('progress-text').innerText = `Soru: ${currentQuestion + 1} / ${questions.length}`;
+            document.getElementById('question-text').innerText = q.q;
+            
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+            
+            q.options.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn w-full text-left p-4 rounded-xl font-medium bg-white';
+                btn.innerHTML = `<span class="inline-block w-8 h-8 mr-3 text-center leading-8 bg-gray-100 rounded-lg font-bold">${String.fromCharCode(65 + index)}</span> ${opt}`;
+                btn.onclick = () => checkAnswer(index);
+                container.appendChild(btn);
+            });
+
+            document.getElementById('feedback-area').classList.add('hidden');
+            document.getElementById('next-btn').classList.add('hidden');
+            canAnswer = true;
+        }
+
+        function checkAnswer(selectedIndex) {
+            if (!canAnswer) return;
+            canAnswer = false;
+
+            const q = questions[currentQuestion];
+            const buttons = document.querySelectorAll('.option-btn');
+            const feedbackArea = document.getElementById('feedback-area');
+            const feedbackMsg = document.getElementById('feedback-message');
+            const explanation = document.getElementById('explanation-text');
+
+            feedbackArea.classList.remove('hidden');
+
+            if (selectedIndex === q.correct) {
+                score.correct++;
+                buttons[selectedIndex].classList.add('correct');
+                feedbackMsg.innerHTML = "🔔 TEBRİKLER! (Doğru Cevap Sesi)";
+                feedbackMsg.className = "font-bold text-lg text-green-600";
+            } else {
+                score.wrong++;
+                buttons[selectedIndex].classList.add('wrong');
+                buttons[q.correct].classList.add('correct');
+                feedbackMsg.innerHTML = "❌ DİKKAT! (Yanlış Cevap Sesi)";
+                feedbackMsg.className = "font-bold text-lg text-red-600";
+            }
+
+            explanation.innerText = q.explanation;
+            document.getElementById('next-btn').classList.remove('hidden');
+        }
+
+        function nextQuestion() {
+            currentQuestion++;
+            if (currentQuestion < questions.length) {
+                showQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            document.getElementById('exam-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+
+            const percent = Math.round((score.correct / questions.length) * 100);
+            document.getElementById('res-correct').innerText = score.correct;
+            document.getElementById('res-wrong').innerText = score.wrong;
+            document.getElementById('res-percent').innerText = `%${percent}`;
+
+            let badge = "";
+            if (percent >= 90) badge = "🏆";
+            else if (percent >= 70) badge = "🥇";
+            else if (percent >= 50) badge = "🥈";
+            else badge = "✍️";
+
+            document.getElementById('badge-container').innerHTML = `<div class="badge-pulse">${badge}</div><p class="text-sm font-bold text-blue-600 mt-2">BAŞARI ROZETİ</p>`;
+        }
+    </script>
+</body>
+</html>
